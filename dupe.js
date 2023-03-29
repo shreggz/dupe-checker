@@ -1,56 +1,64 @@
-const textbox = document.getElementById('submitted-text');
-countDuplicateWords(textbox);
+const textbox = document.getElementById("submitted-text");
+const dupeBox = document.getElementById("dupe-box");
+countDuplicateWords(textbox, dupeBox);
 
-function countDuplicateWords(textbox) {
-    // Create an object to store the count of each word encountered
-    let wordCounts = {};
-  
-    // Create an empty array to store any duplicate words found
-    let duplicates = [];
-  
-    // Create an empty object to store the counts of each duplicate word found
-    let duplicateCounts = {};
-  
-    // Function to update the counts whenever the textbox changes
+function countDuplicateWords(textbox, dupeBox) {
     function updateCounts() {
-      // Get the value of the textbox and split it into an array of words
-      let words = textbox.value.toLowerCase().split(/\W+/);
-  
-      // Reset the wordCounts and duplicates arrays
-      wordCounts = {};
-      duplicates = [];
-  
-      // Iterate over each word in the array
-      words.forEach((word) => {
-        // If the word is not already in the wordCounts object, add it with a count of 1
-        if (!wordCounts[word]) {
-          wordCounts[word] = 1;
-        } 
-        // If the word is already in the wordCounts object, increment its count and add it to the duplicates array if necessary
-        else {
-          wordCounts[word]++;
-          if (!duplicates.includes(word)) {
-            duplicates.push(word);
-          }
-        }
-      });
-  
-      // Clear the duplicateCounts object
-      duplicateCounts = {};
-  
-      // Iterate over each duplicate word and store its count in the duplicateCounts object
-      duplicates.forEach((word) => {
-        duplicateCounts[word] = wordCounts[word];
-      });
-  
-      // Log the duplicateCounts object to the console
-      if (Object.keys(duplicateCounts).length > 0) {
-        console.log('Duplicate word counts:', duplicateCounts);
-      } else {
-        console.log('No duplicate words found.');
-      }
+        let words = textbox.value.toLowerCase().match(/[\w']+\b/g);
+        let {wordCounts, duplicates} = getWordCounts(words);
+        let duplicateCounts = getDuplicateCounts(wordCounts, duplicates);
+        let dupeCounter = generateDupeCounter(duplicateCounts, duplicates);
+        displayDupeCounter(dupeBox, dupeCounter);
     }
-  
-    // Add an event listener to the textbox to call the updateCounts function whenever the textbox changes
-    textbox.addEventListener('input', updateCounts);
-  }
+
+    function getWordCounts(words, duplicates) {
+        let wordCounts = {};
+        duplicates = [];
+        words.forEach((word) => {
+            if (!wordCounts[word]) {
+                wordCounts[word] = 1;
+            } else {
+                wordCounts[word]++;
+                if (!duplicates.includes(word)) {
+                    duplicates.push(word);
+                }
+            }
+        });
+        return {wordCounts, duplicates};
+    }
+
+    function getDuplicateCounts(wordCounts, duplicates) {
+        let duplicateCounts = {};
+        duplicates.forEach((word) => {
+            duplicateCounts[word] = wordCounts[word];
+        });
+        return duplicateCounts;
+    }
+
+    function generateDupeCounter(duplicateCounts, duplicates) {
+        dupeCounter = document.createElement("div");
+        dupeCounter.classList.add("dupe-counter");
+        if (Object.keys(duplicateCounts).length === 0) {
+            dupeCounter.textContent = "No duplicate words found.";
+        } else {
+            let list = document.createElement("ul");
+            duplicates.forEach((word) => {
+                let listItem = document.createElement("li");
+                listItem.textContent = `${word}: ${duplicateCounts[word]}`;
+                list.appendChild(listItem);
+            });
+            dupeCounter.appendChild(list);
+        }
+        return dupeCounter;
+    }
+
+    function displayDupeCounter(dupeBox, dupeCounter) {
+        let oldDupeCounts = dupeBox.querySelectorAll(".dupe-counter");
+        oldDupeCounts.forEach((count) => {
+            dupeBox.removeChild(count);
+        });
+        dupeBox.appendChild(dupeCounter);
+    }
+
+    textbox.addEventListener("input", updateCounts);
+}
